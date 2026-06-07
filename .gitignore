@@ -1,0 +1,51 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+.env
+.venv
+env/
+venv/
+*.whl
+
+# --- Jupyter / IPython ---
+.ipynb_checkpoints/
+*.ipynb
+
+# --- IDEs ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# --- Project Data (large & generated) ---
+data/LibriSpeech/
+data/processed_wav/
+data/train/
+data/val/
+data/test/
+
+# --- Model Weights ---
+weights/*.pth
+weights/*.pt
+
+# --- Evaluation Outputs ---
+evaluation_report_*.csv
+
+# --- Audio Files ---
+*.wav
+*.flac
+*.mp3
+
+# --- Miscellaneous ---
+*.log
+*.tmp

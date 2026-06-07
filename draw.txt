@@ -1,0 +1,341 @@
+# 论文实验结果可视化需求
+
+## 数据背景
+
+我有 4 个实验结果表格：
+
+```text
+spk_2.csv
+spk_3.csv
+spk_4.csv
+spk_5.csv
+```
+
+每个表格结构类似：
+
+```text
+speaker,sample,sdr_before,sdr_after,delta_sdr,stoi,pesq
+```
+
+前100行为原始测试样本。
+
+末尾若干行为统计结果，例如：
+
+```text
+SubAvg: Mild Noise (SDR > -5dB)
+SubAvg: Moderate Noise (-10dB < SDR <= -5dB)
+SubAvg: Severe Noise (SDR <= -10dB)
+== TOTAL AVERAGE ==
+```
+
+其中：
+
+* delta_sdr = SDR提升量
+* stoi = 语音可懂度
+* pesq = 语音质量
+
+---
+
+# 总体要求
+
+生成适合毕业论文的高质量图片。
+
+要求：
+
+* dpi=300
+* png保存
+* 字体统一（Times New Roman）
+* 坐标轴字号统一
+* 图例无遮挡
+* 使用 matplotlib
+* 不使用 seaborn 默认风格
+* 每张图单独输出
+* 图片尺寸适合A4论文排版
+
+建议：
+
+```python
+figsize=(8,5)
+dpi=300
+```
+
+---
+
+# 图1：不同说话人数下总体性能趋势图
+
+## 目的
+
+展示说话人数增加对系统性能的影响。
+
+## 数据来源
+
+每个文件中的：
+
+```text
+== TOTAL AVERAGE ==
+```
+
+对应数据。
+
+## 横轴
+
+```text
+2
+3
+4
+5
+```
+
+表示说话人数。
+
+## 纵轴
+
+绘制三条曲线：
+
+```text
+ΔSDR
+STOI
+PESQ
+```
+
+使用双Y轴：
+
+左轴：
+
+```text
+ΔSDR
+```
+
+右轴：
+
+```text
+STOI
+PESQ
+```
+
+避免量纲差异导致曲线被压缩。
+
+## 图标题
+
+```text
+Overall Performance under Different Numbers of Speakers
+```
+
+---
+
+# 图2：STOI随噪声等级变化曲线
+
+## 目的
+
+展示噪声恶化时语音可懂度变化。
+
+## 数据来源
+
+每个文件中的：
+
+```text
+SubAvg: Mild
+SubAvg: Moderate
+SubAvg: Severe
+```
+
+对应STOI。
+
+## 横轴
+
+```text
+Mild
+Moderate
+Severe
+```
+
+## 纵轴
+
+```text
+STOI
+```
+
+## 曲线
+
+四条：
+
+```text
+2 Speakers
+3 Speakers
+4 Speakers
+5 Speakers
+```
+
+## 图标题
+
+```text
+STOI under Different Noise Conditions
+```
+
+---
+
+# 图3：PESQ随噪声等级变化曲线
+
+## 目的
+
+展示噪声恶化时语音质量变化。
+
+## 数据来源
+
+各SubAvg对应PESQ。
+
+## 横轴
+
+```text
+Mild
+Moderate
+Severe
+```
+
+## 纵轴
+
+```text
+PESQ
+```
+
+## 曲线
+
+四条：
+
+```text
+2 Speakers
+3 Speakers
+4 Speakers
+5 Speakers
+```
+
+## 图标题
+
+```text
+PESQ under Different Noise Conditions
+```
+
+---
+
+# 图4：ΔSDR箱线图（重点）
+
+## 目的
+
+展示模型稳定性和样本分布。
+
+## 数据来源
+
+仅使用前100条原始测试样本。
+
+忽略：
+
+```text
+SubAvg
+TOTAL AVERAGE
+```
+
+行。
+
+## 横轴
+
+```text
+2 Speakers
+3 Speakers
+4 Speakers
+5 Speakers
+```
+
+## 纵轴
+
+```text
+ΔSDR (dB)
+```
+
+## 要求
+
+显示：
+
+* 中位数
+* 四分位数
+* 异常值
+
+## 图标题
+
+```text
+Distribution of ΔSDR across Different Speaker Numbers
+```
+
+---
+
+# 图5：ΔSDR热力图
+
+## 目的
+
+同时展示：
+
+* 说话人数影响
+* 噪声等级影响
+
+## 数据来源
+
+各文件：
+
+```text
+SubAvg: Mild
+SubAvg: Moderate
+SubAvg: Severe
+```
+
+对应ΔSDR。
+
+## 行
+
+```text
+2 Speakers
+3 Speakers
+4 Speakers
+5 Speakers
+```
+
+## 列
+
+```text
+Mild
+Moderate
+Severe
+```
+
+## 单元格内容
+
+```text
+ΔSDR
+```
+
+保留两位小数。
+
+## 要求
+
+显示数值标注。
+
+颜色条显示：
+
+```text
+ΔSDR (dB)
+```
+
+## 图标题
+
+```text
+Heatmap of ΔSDR under Different Speaker Numbers and Noise Conditions
+```
+
+---
+
+
+# 论文推荐最终保留
+* 图1 总体趋势图
+* 图2 STOI变化图
+* 图3 PESQ变化图
+* 图4 ΔSDR箱线图
+* 图5 ΔSDR热力图
+
