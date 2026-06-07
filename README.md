@@ -1,353 +1,358 @@
 # 🍸 Cocktail Party Speech Separation
 
-**Deep Learning-Based Binaural Speech Separation Using Spatial Cues**
+**基于双耳空间线索的深度学习语音分离**
 
 [![Python](https://img.shields.io/badge/Python-3.10-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> 鸡尾酒会问题语音分离 —— 基于双耳空间线索的深度学习方案
+> Deep Learning-Based Binaural Speech Separation Using Spatial Cues
 
 ---
 
-## 📖 Table of Contents
+## 📖 目录
 
-- [Project Overview](#-project-overview)
-- [Code Structure](#1-code-structure)
-- [Environment Setup](#2-environment-setup)
-- [Data Preparation](#3-data-preparation)
-- [Model Training](#4-model-training)
-- [Inference](#5-inference--generate-separated-audio)
-- [Evaluation](#6-quantitative-evaluation)
-- [Expected Results](#7-expected-results)
-- [Quick Start](#8-quick-start)
-- [FAQ](#9-faq)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
+- [项目概述](#-项目概述)
+- [代码结构](#1-代码结构)
+- [环境配置](#2-环境配置)
+- [数据准备](#3-数据准备)
+- [模型训练](#4-模型训练)
+- [推理——生成分离音频](#5-推理--生成分离音频)
+- [量化评估](#6-量化评估)
+- [预期结果参考](#7-预期结果参考)
+- [完整复现流程](#8-完整复现流程)
+- [常见问题](#9-常见问题)
+- [许可证](#license)
+- [致谢](#acknowledgements)
 
 ---
 
-## 🎯 Project Overview
+## 🎯 项目概述
 
-This project tackles the **Cocktail Party Problem**: separating a target speaker's voice from multi-talker reverberant mixtures by leveraging **binaural spatial cues** (e.g., Interaural Level Difference, ILD).
+本项目解决**鸡尾酒会问题（Cocktail Party Problem）**：在多人同时说话的多声源混响环境中，利用**双耳（Binaural）空间线索**（如双耳声级差 ILD）从混合音频中分离出**目标说话人**的语音。
 
-### Core Approach
+### 核心方法
 
-| Component | Description |
+| 环节 | 说明 |
 | --- | --- |
-| **Room Simulation** | `pyroomacoustics` simulates realistic room acoustics with 2–5 concurrent speakers, generating binaural mixtures |
-| **Separation Model** | Bidirectional GRU-based time-frequency mask prediction network (**SeparationNet**), taking binaural magnitude spectra + ILD spatial features, outputting the Ideal Ratio Mask (IRM) |
-| **Evaluation** | Multi-dimensional assessment via **SI-SDR**, **STOI**, and **PESQ** |
+| **房间声学模拟** | 使用 `pyroomacoustics` 模拟真实房间声学环境，生成 2~5 人同时说话的双耳混合音频 |
+| **分离模型** | 构建基于**双向 GRU** 的时频域掩码预测网络（**SeparationNet**），输入双耳幅度谱 + ILD 空间特征，输出目标说话人的理想比值掩码（IRM） |
+| **量化评估** | 采用 **SI-SDR**、**STOI**、**PESQ** 三项指标进行多维度评估 |
 
 ---
 
-## 1. Code Structure
+## 1. 代码结构
 
 ```
 Cocktail_Party_Project/
 ├── src/
-│   ├── model.py              # Model definition: SeparationNet (Bi-GRU mask predictor)
-│   ├── room_sim.py           # Room acoustics simulation (pyroomacoustics multi-source mixing)
-│   ├── convert_audio.py      # Audio format conversion: FLAC → WAV (16kHz)
-│   ├── run_convert.py        # Format conversion entry point
-│   └── features.py           # Binaural feature extraction (ILD computation, etc.)
+│   ├── model.py              # 模型定义：SeparationNet（双向GRU掩码预测网络）
+│   ├── room_sim.py           # 房间声学模拟：pyroomacoustics 多声源混音
+│   ├── convert_audio.py      # 音频格式转换：FLAC → WAV (16kHz)
+│   ├── run_convert.py        # 格式转换入口脚本
+│   └── features.py           # 双耳特征提取工具（ILD 计算等）
 ├── data/
-│   ├── LibriSpeech/          # [Download required] Original LibriSpeech FLAC corpus
-│   ├── processed_wav/        # FLAC-converted 16kHz WAV files
-│   ├── train/                # Training set (4 gradients × 1000 samples = 4000)
-│   ├── val/                  # Validation set (4 gradients × 100 samples = 400)
-│   └── test/                 # Test set (4 gradients × 100 samples = 400)
+│   ├── LibriSpeech/          # [需自行下载] 原始 LibriSpeech FLAC 语料
+│   ├── processed_wav/        # FLAC 转换后的 16kHz WAV 文件
+│   ├── train/                # 训练集（4梯度 × 1000样本 = 4000）
+│   ├── val/                  # 验证集（4梯度 × 100样本 = 400）
+│   └── test/                 # 测试集（4梯度 × 100样本 = 400）
 ├── weights/
-│   └── separation_net.pth    # Trained model weights
-├── figures/                  # Evaluation result visualizations
-├── main.py                   # Training entry point
-├── prepare_data.py           # Dataset generation pipeline
-├── inference.py              # Batch inference (generates separated audio)
-├── evaluate.py               # Quantitative evaluation (SDR/STOI/PESQ)
-├── draw_figures.py           # Visualization script
-├── requirements.txt          # Python dependencies
-├── LICENSE                   # MIT License
-└── README.md                 # This file
+│   └── separation_net.pth    # 训练好的模型权重
+├── figures/                  # 评估结果可视化图表
+├── main.py                   # 训练主程序
+├── prepare_data.py           # 数据集生成流水线
+├── inference.py              # 批量推理（生成分离音频）
+├── evaluate.py               # 量化评估（SDR/STOI/PESQ）
+├── draw_figures.py           # 可视化脚本
+├── requirements.txt          # Python 依赖
+├── LICENSE                   # MIT 开源许可证
+└── README.md                 # 本文件
 ```
 
 ---
 
-## 2. Environment Setup
+## 2. 环境配置
 
-### 2.1 Create Virtual Environment (Recommended)
+### 2.1 创建虚拟环境（推荐）
 
 ```bash
 conda create -n speech_sep python=3.10
 conda activate speech_sep
 ```
 
-### 2.2 Install Dependencies
+### 2.2 安装依赖
 
 ```bash
 pip install -r requirements.txt
 ```
 
-> **Note**: The `pesq` package may require additional build tools on some platforms. If `pip install pesq` fails, try:
+> **注意**：`pesq` 包在某些平台可能需要额外编译工具。若 `pip install pesq` 失败，可尝试：
 > ```bash
 > conda install -c conda-forge pystoi
 > pip install pesq
 > ```
-> Or refer to the [pesq PyPI page](https://pypi.org/project/pesq/) for platform-specific instructions.
+> 或参考 [pesq PyPI 页面](https://pypi.org/project/pesq/) 获取平台特定安装说明。
 
-### 2.3 Hardware Requirements
+### 2.3 硬件要求
 
-| Component | Minimum | Recommended |
+| 组件 | 最低要求 | 推荐配置 |
 | --- | --- | --- |
-| GPU | None (CPU training supported) | NVIDIA GPU ≥ 6GB VRAM |
+| GPU | 无（支持 CPU 训练） | NVIDIA GPU ≥ 6GB VRAM |
 | RAM | 8 GB | 16 GB+ |
-| Disk | ~2 GB (with LibriSpeech dev-clean) | 10 GB+ |
+| 磁盘 | 约 2 GB（含 LibriSpeech dev-clean 语料） | 10 GB+ |
 
 ---
 
-## 3. Data Preparation
+## 3. 数据准备
 
-### 3.1 Download Raw Corpus — LibriSpeech
+### 3.1 下载原始语料 —— LibriSpeech
 
-Download LibriSpeech from [OpenSLR](https://www.openslr.org/12). This project uses the **`dev-clean`** subset (~342 MB, 40 speakers, 2,703 utterances), which is sufficient for training. For larger-scale training, replace with `train-clean-100` (~6.3 GB, 251 speakers).
+从 [OpenSLR](https://www.openslr.org/12) 下载 LibriSpeech 数据集。本项目当前使用 **`dev-clean`** 子集（约 342 MB，40 位说话人，2,703 条语音），已可满足训练需求。如需更大规模训练，可替换为 `train-clean-100`（约 6.3 GB，251 位说话人）。
 
 ```bash
-# Download dev-clean.tar.gz (~337 MB) and extract to data/LibriSpeech/
-# Final directory structure: data/LibriSpeech/dev-clean/<speaker_id>/<chapter_id>/*.flac
+# 下载 dev-clean.tar.gz（约 337 MB）后解压到 data/LibriSpeech/
+# 最终目录结构应为 data/LibriSpeech/dev-clean/<speaker_id>/<chapter_id>/*.flac
 ```
 
-> **Speaker Count Requirement**: At least 20 distinct speaker audio clips are required; otherwise, the train/val/test split independence cannot be guaranteed (see `prepare_data.py` line 81 for the hard check).
+> **说话人数量要求**：最少需要 20 条以上不同说话人的音频片段，否则训练/验证/测试集的独立划分无法保证（参见 `prepare_data.py` 第 81 行的硬性检查）。
 
-### 3.2 Audio Format Conversion: FLAC → WAV
+### 3.2 音频格式转换：FLAC → WAV
 
-Convert LibriSpeech FLAC files to 16kHz mono WAV:
+将 LibriSpeech 的 FLAC 文件统一转换为 16kHz 单声道 WAV：
 
 ```bash
 cd src
 python run_convert.py
 ```
 
-Output is written to `data/processed_wav/`, preserving the original LibriSpeech directory hierarchy.
+转换结果输出到 `data/processed_wav/`，保持原始 LibriSpeech 的目录层级。
 
-### 3.3 Generate Simulated Dataset
+### 3.3 生成模拟数据集
 
-Run the data generation pipeline to mix multiple speakers in a simulated room:
+运行数据生成流水线，利用 `pyroomacoustics` 在模拟房间中混合多个说话人，生成训练/验证/测试集：
 
 ```bash
 python prepare_data.py
 ```
 
-**Generated Directory Structure:**
+**生成后的数据目录结构：**
 
 ```
 data/
 ├── train/
-│   ├── spk_2/               # 2-speaker scenario
+│   ├── spk_2/               # 2人同时说话场景
 │   │   ├── sample_0/
-│   │   │   ├── clean_target_spk0.wav      # Target speaker dry signal (mono)
-│   │   │   ├── clean_interferer_spk1.wav  # Interferer dry signal
-│   │   │   └── mixed.wav                  # Binaural mixture (2-channel)
+│   │   │   ├── clean_target_spk0.wav      # 目标说话人干音（单声道）
+│   │   │   ├── clean_interferer_spk1.wav  # 干扰说话人干音
+│   │   │   └── mixed.wav                  # 双耳混合音频（2声道）
 │   │   ├── sample_1/
-│   │   └── ... (1000 samples total)
-│   ├── spk_3/               # 3-speaker scenario
-│   ├── spk_4/               # 4-speaker scenario
-│   └── spk_5/               # 5-speaker scenario
-├── val/                     # Same structure, 100 samples per gradient
-└── test/                    # Same structure, 100 samples per gradient
+│   │   └── ... （共1000个样本）
+│   ├── spk_3/               # 3人同时说话场景
+│   ├── spk_4/               # 4人同时说话场景
+│   └── spk_5/               # 5人同时说话场景
+├── val/                     # 同上结构，每梯度100样本
+└── test/                    # 同上结构，每梯度100样本
 ```
 
-**Key Design Decisions:**
+**关键设计决策：**
 
-| Parameter | Value | Notes |
+| 参数 | 取值 | 说明 |
 | --- | --- | --- |
-| Dataset Split | Train:Val:Test = 8:1:1 | Strict speaker-level isolation, zero leakage |
-| Samples per Gradient | Train=1000, Val=100, Test=100 | 4800 samples total |
-| Random Seed | 42 | Ensures reproducible splits |
-| Room Dimensions | 5m × 5m × 3m | Typical indoor meeting room |
-| Mic Spacing | 20 cm | Simulates binaural ear spacing |
-| RT60 | ~0.2 (wall absorption 0.2) | Low-reverberation scenario |
-| Sampling Rate | 16 kHz | Standard for speech separation |
-| Audio Duration | 2.0 sec | Fixed length for batch processing |
+| 数据集划分 | Train:Val:Test = 8:1:1 | 在原始说话人级别严格隔离，零数据泄露 |
+| 每梯度样本数 | Train=1000, Val=100, Test=100 | 总计4800样本 |
+| 随机种子 | 42 | 确保划分可复现 |
+| 房间尺寸 | 5m × 5m × 3m | 模拟典型室内会议室 |
+| 麦克风间距 | 20 cm | 模拟人耳双耳间距 |
+| RT60 | 约 0.2（墙面吸收系数 0.2） | 低混响场景 |
+| 采样率 | 16 kHz | 语音分离标准采样率 |
+| 音频时长 | 2.0 秒 | 固定长度，便于批处理 |
 
 ---
 
-## 4. Model Training
+## 4. 模型训练
 
-### 4.1 Start Training
+### 4.1 启动训练
 
 ```bash
 python main.py
 ```
 
-### 4.2 Training Configuration
+### 4.2 训练配置一览
 
-| Hyperparameter | Value | Notes |
+| 超参数 | 取值 | 说明 |
 | --- | --- | --- |
-| Batch Size | 128 | Large batch for stable gradient estimation |
-| Initial LR | 0.0025 | Adam optimizer |
-| LR Schedule | ReduceLROnPlateau | factor=0.5, patience=3 |
-| LR Threshold | 1×10⁻⁵ | Triggers early stopping when reached |
-| Early Stopping | patience=7 | Stops if val loss doesn't improve for 7 epochs |
-| Max Epochs | 100 | Safety upper bound |
-| Loss Function | MSE Loss | Predicted mask vs. Ideal Ratio Mask |
-| Mixed Precision | AMP (autocast + GradScaler) | Faster training, reduced memory |
-| STFT Params | n_fft=512, hop_length=128 | Freq resolution 31.25 Hz |
+| Batch Size | 128 | 大 batch 稳定梯度估计 |
+| 初始学习率 | 0.0025 | Adam 优化器 |
+| 学习率调度 | ReduceLROnPlateau | factor=0.5, patience=3 |
+| 最低学习率阈值 | 1×10⁻⁵ | 跌破即触发早停 |
+| Early Stopping | patience=7 | 验证 loss 连续 7 轮不降即停止 |
+| 最大 Epoch | 100 | 安全上限 |
+| 损失函数 | MSE Loss | 预测掩码 vs 理想比值掩码 |
+| 混合精度 | AMP（autocast + GradScaler） | 加速训练、节省显存 |
+| STFT 参数 | n_fft=512, hop_length=128 | 频率分辨率 31.25 Hz |
 
-### 4.3 Model Architecture
+### 4.3 模型架构详情
 
 ```
 SeparationNet:
-┌─────────────────────────────────────────────────────┐
-│ Input: [B, 2, 32000] binaural time-domain waveform  │
-│   ├─ Left-ear STFT  → mag_left   [B, 257, T]       │
-│   ├─ Right-ear STFT → mag_right  [B, 257, T]       │
-│   └─ ILD = 20·log₁₀(L/R)        [B, 257, T]       │
-│                                                      │
-│ Feature Concat: [B, 3, 257, T] → [B, T, 771]       │
-│                                                      │
-│ Bidirectional GRU (2 layers, hidden=512)             │
-│   └─ Output: [B, T, 1024]                           │
-│                                                      │
-│ FC + Sigmoid                                         │
-│   └─ Output: [B, T, 257]  Ideal Ratio Mask          │
-└─────────────────────────────────────────────────────┘
-Parameters: ~6.3M
+┌─────────────────────────────────────────────┐
+│ 输入: [B, 2, 32000] 双耳时域波形              │
+│   ├─ 左耳 STFT → mag_left  [B, 257, T]      │
+│   ├─ 右耳 STFT → mag_right [B, 257, T]      │
+│   └─ ILD = 20·log₁₀(L/R)   [B, 257, T]     │
+│                                              │
+│ 特征拼接: [B, 3, 257, T] → [B, T, 771]      │
+│                                              │
+│ 双向 GRU（2层, hidden=512）                   │
+│   └─ 输出: [B, T, 1024]                      │
+│                                              │
+│ 全连接层 + Sigmoid                            │
+│   └─ 输出: [B, T, 257]  理想比值掩码          │
+└─────────────────────────────────────────────┘
+参数量: ~6.3M
 ```
 
-### 4.4 Training Monitoring
+### 4.4 训练监控
 
-Each epoch prints:
-- Average training loss
-- Per-gradient validation loss (spk_2 ~ spk_5)
-- Global validation loss (used for model selection)
-- Current learning rate
+训练过程会逐 epoch 打印：
 
-Model weights are saved to `weights/separation_net.pth`.
+- 训练集平均 Loss
+- 各说话人梯度（spk_2 ~ spk_5）的验证 Loss
+- 全局验证 Loss（作为模型选择指标）
+- 当前学习率
+
+模型权重保存在 `weights/separation_net.pth`。
 
 ---
 
-## 5. Inference — Generate Separated Audio
+## 5. 推理 —— 生成分离音频
 
 ```bash
 python inference.py
 ```
 
-The inference script:
-1. Loads trained weights from `weights/separation_net.pth`
-2. Iterates over all `sample_*` directories under `data/test/`
-3. Reads `mixed.wav`, predicts the mask, reconstructs the time-domain waveform via iSTFT with left-ear phase
-4. Writes the separated result as `processed.wav` in each sample directory
+推理脚本会：
 
-> Separated audio is **mono**, 16kHz sampling rate.
+1. 加载 `weights/separation_net.pth` 训练权重
+2. 遍历 `data/test/` 下所有 `sample_*` 文件夹
+3. 读取 `mixed.wav`，模型预测掩码，结合左耳相位通过 iSTFT 重建时域波形
+4. 将分离结果写入各样本文件夹下的 `processed.wav`
+
+> 分离音频为**单声道**，16kHz 采样率。
 
 ---
 
-## 6. Quantitative Evaluation
+## 6. 量化评估
 
 ```bash
 python evaluate.py
 ```
 
-### 6.1 Evaluation Metrics
+### 6.1 评估指标
 
-| Metric | Full Name | Dimension | Range |
+| 指标 | 全称 | 衡量维度 | 取值范围 |
 | --- | --- | --- | --- |
-| **SI-SDR** | Scale-Invariant Signal-to-Distortion Ratio | Waveform-level separation accuracy | Higher is better (dB) |
-| **ΔSDR** | SDR Improvement (SDR_sep − SDR_mix) | Separation gain | Higher is better (dB) |
-| **STOI** | Short-Time Objective Intelligibility | Speech intelligibility | 0–1, higher is better |
-| **PESQ (WB)** | Perceptual Evaluation of Speech Quality (Wideband) | Perceived speech quality | -0.5–4.5, higher is better |
+| **SI-SDR** | Scale-Invariant Signal-to-Distortion Ratio | 波形层面分离精度 | 越高越好（dB） |
+| **ΔSDR** | SDR Improvement（SDR_sep − SDR_mix） | 分离增益 | 越高越好（dB） |
+| **STOI** | Short-Time Objective Intelligibility | 语音可懂度 | 0~1，越高越好 |
+| **PESQ (WB)** | Perceptual Evaluation of Speech Quality（Wideband） | 感知语音质量 | -0.5~4.5，越高越好 |
 
-### 6.2 Evaluation Output
+### 6.2 评估输出
 
-Per-gradient CSV reports are generated:
+按说话人梯度（spk_2 ~ spk_5）分别输出独立 CSV 报告：
 
 - `evaluation_report_spk_2.csv`
 - `evaluation_report_spk_3.csv`
 - `evaluation_report_spk_4.csv`
 - `evaluation_report_spk_5.csv`
 
-Each CSV contains: per-sample details + sub-averages grouped by initial SNR level + global average.
+每个 CSV 包含：逐样本明细 + 按初始信噪比（Severe/Moderate/Mild）分组的子平均 + 全局总平均。
 
-### 6.3 Initial SNR Stratification
+### 6.3 初始信噪比分层
 
-Test samples are automatically categorized into three tiers by mixed-signal SDR:
+评估脚本自动按混合信号 SDR 将测试样本分为三档：
 
-| Tier | SDR Range | Meaning |
+| 分层 | SDR 范围 | 含义 |
 | --- | --- | --- |
-| Severe Noise | SDR ≤ -10 dB | Target speech deeply buried in interference |
-| Moderate Noise | -10 dB < SDR ≤ -5 dB | Moderate interference |
-| Mild Noise | SDR > -5 dB | Target speech relatively clear |
+| Severe Noise | SDR ≤ -10 dB | 目标语音深埋于干扰中 |
+| Moderate Noise | -10 dB < SDR ≤ -5 dB | 中等干扰强度 |
+| Mild Noise | SDR > -5 dB | 目标语音相对清晰 |
 
 ---
 
-## 7. Expected Results
+## 7. 预期结果参考
 
-Typical performance after training on LibriSpeech dev-clean:
+基于 LibriSpeech dev-clean 语料训练后的典型表现：
 
-| Scenario | Average ΔSDR | Average STOI | Average PESQ |
+| 场景 | Average ΔSDR | Average STOI | Average PESQ |
 | --- | --- | --- | --- |
-| 2 Speakers | +8 ~ +12 dB | 0.85 ~ 0.92 | 2.5 ~ 3.2 |
-| 3 Speakers | +6 ~ +9 dB | 0.78 ~ 0.86 | 2.0 ~ 2.7 |
-| 4 Speakers | +4 ~ +7 dB | 0.70 ~ 0.80 | 1.7 ~ 2.3 |
-| 5 Speakers | +3 ~ +5 dB | 0.62 ~ 0.73 | 1.4 ~ 2.0 |
+| 2 说话人 | +8 ~ +12 dB | 0.85 ~ 0.92 | 2.5 ~ 3.2 |
+| 3 说话人 | +6 ~ +9 dB | 0.78 ~ 0.86 | 2.0 ~ 2.7 |
+| 4 说话人 | +4 ~ +7 dB | 0.70 ~ 0.80 | 1.7 ~ 2.3 |
+| 5 说话人 | +3 ~ +5 dB | 0.62 ~ 0.73 | 1.4 ~ 2.0 |
 
-> **Note**: Results vary based on LibriSpeech subset size, training duration, and hardware. The above ranges are for reference.
+> **注**：实际结果受 LibriSpeech 子集大小、训练时长、硬件条件等因素影响，上述为参考区间。
 
 ---
 
-## 8. Quick Start
+## 8. 完整复现流程
 
 ```bash
-# Step 0: Environment Setup
+# Step 0: 环境准备
 conda create -n speech_sep python=3.10 -y
 conda activate speech_sep
 pip install -r requirements.txt
 
-# Step 1: Download LibriSpeech dev-clean and extract to data/LibriSpeech/
+# Step 1: 下载 LibriSpeech dev-clean 并解压到 data/LibriSpeech/
 
-# Step 2: Convert FLAC to WAV
+# Step 2: FLAC 转 WAV
 cd src && python run_convert.py && cd ..
 
-# Step 3: Generate simulated dataset (room mixing)
+# Step 3: 生成模拟数据集（房间混音）
 python prepare_data.py
 
-# Step 4: Train the model
+# Step 4: 训练模型
 python main.py
 
-# Step 5: Run inference to generate separated audio
+# Step 5: 推理生成分离音频
 python inference.py
 
-# Step 6: Quantitative evaluation
+# Step 6: 量化评估
 python evaluate.py
 ```
 
 ---
 
-## 9. FAQ
+## 9. 常见问题
 
-**Q: Out of memory during training?**
-- Reduce `TARGET_BATCH_SIZE` in `main.py` (e.g., to 64 or 32).
+**Q: 训练时显存不足？**
 
-**Q: How to use a different dataset?**
-- Place any 16kHz mono WAV files under `data/processed_wav/`, maintaining the subdirectory structure.
-- Ensure at least 20 distinct audio files for valid train/val/test splits.
+- 减小 `main.py` 中的 `TARGET_BATCH_SIZE`（如改为 64 或 32）。
 
-**Q: Why binaural instead of monaural?**
-- Binaural cues (ILD, ITD) provide spatial information that helps distinguish co-located vs. spatially separated speakers — critical for realistic cocktail party scenarios.
+**Q: 如何更换数据集？**
+
+- 将任意 16kHz 单声道 WAV 文件放入 `data/processed_wav/` 目录，保持子目录结构即可。
+- 确保音频文件数量 ≥ 20，保证训练/验证/测试集划分有效。
+
+**Q: 为什么用双耳而非单耳？**
+
+- 双耳线索（ILD、ITD）提供了空间信息，有助于区分同位与空间分离的说话人——这对真实的鸡尾酒会场景至关重要。
 
 ---
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+本项目采用 MIT 许可证 —— 详见 [LICENSE](LICENSE) 文件。
 
 ---
 
-## Acknowledgements
+## 致谢
 
-- **LibriSpeech** dataset: [OpenSLR](https://www.openslr.org/12)
-- **pyroomacoustics**: Room acoustics simulation toolkit
-- **PyTorch**: Deep learning framework
-- Speech separation metrics via `pystoi` and `pesq`
+- **LibriSpeech** 数据集：[OpenSLR](https://www.openslr.org/12)
+- **pyroomacoustics**：房间声学模拟工具包
+- **PyTorch**：深度学习框架
+- 语音分离评估指标由 `pystoi` 和 `pesq` 提供支持
 
 ---
 
