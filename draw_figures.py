@@ -36,7 +36,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 SPEAKER_COUNTS = [2, 3, 4, 5]
 CSV_PATHS = {n: f"evaluation_report_spk_{n}.csv" for n in SPEAKER_COUNTS}
 
-# 统一的列名（兼容你 draw.txt 中的命名 & 实际 CSV）
+# 统一的列名
 COL_GROUP = "Group"
 COL_SAMPLE = "Sample"
 COL_SDR_MIX = "SDR_Mix (dB)"

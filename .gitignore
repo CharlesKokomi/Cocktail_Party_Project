@@ -35,11 +35,11 @@ data/val/
 data/test/
 
 # --- Model Weights ---
-weights/*.pth
-weights/*.pt
+# weights/*.pth
+# weights/*.pt
 
 # --- Evaluation Outputs ---
-evaluation_report_*.csv
+# evaluation_report_*.csv
 
 # --- Audio Files ---
 *.wav

@@ -23,13 +23,13 @@ def generate_gradient_dataset(file_sublist, target_root_dir, samples_per_scenari
         spk_group_folder = os.path.join(target_root_dir, f"spk_{num_speakers}")
         os.makedirs(spk_group_folder, exist_ok=True)
 
-        print(f"👉 正在向 [{target_root_dir}] 写入 【{num_speakers} 个说话者】 场景 ({samples_per_scenario}个样本)...")
+        print(f"正在向 [{target_root_dir}] 写入 【{num_speakers} 个说话者】 场景 ({samples_per_scenario}个样本)...")
 
         pbar = tqdm(total=samples_per_scenario)
         success_count = 0
 
         while success_count < samples_per_scenario:
-            # 💡【绝对安全】：严格从该集合专属的原始音频子集中摇号，不同集合的原始干音绝不重叠！
+            #【绝对安全】：严格从该集合专属的原始音频子集中摇号，不同集合的原始干音绝不重叠！
             chosen_indices = np.random.choice(len(file_sublist), num_speakers, replace=False)
 
             signals = []
@@ -73,10 +73,10 @@ if __name__ == "__main__":
     data_root = "data"
 
     print("==================================================================")
-    print("        🚀 语音分离项目：全套多梯度学术数据集一键全量重构 🚀        ")
+    print("        语音分离项目：全套多梯度学术数据集一键全量重构        ")
     print("==================================================================")
 
-    # 1. 扫描并打乱基底原始文件
+    #扫描并打乱基底原始文件
     all_files = sorted(glob.glob(f"{src_dir}/**/*.wav", recursive=True))
     if len(all_files) < 20:
         raise ValueError(f"【关键错误】原始纯净音频文件太少 ({len(all_files)}个)，无法支撑高强度的隔离集划分！")
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     np.random.shuffle(all_files)
     total_files = len(all_files)
 
-    # 2. 💡【核心防线】：严格按比例（8:1:1）切断原始干音资产，从源头绝交
+    #按比例（8:1:1）切断原始干音资产，从源头绝交
     train_split_idx = int(total_files * 0.8)
     val_split_idx = int(total_files * 0.9)
 
@@ -94,14 +94,14 @@ if __name__ == "__main__":
     val_files = all_files[train_split_idx:val_split_idx]
     test_files = all_files[val_split_idx:]
 
-    print(f"【🎯 原始音频基底隔离切片成功】")
-    print(f"  ├── ⚖️ 训练集(Train) 分配基底 : {len(train_files)} 个音频 (占 80%)")
-    print(f"  ├── ⚖️ 验证集(Val)   分配基底 : {len(val_files)} 个音频 (占 10%)")
-    print(f"  └── ⚖️ 测试集(Test)  分配基底 : {len(test_files)} 个音频 (占 10%)")
+    print(f"【原始音频基底隔离切片成功】")
+    print(f"  ├──训练集(Train) 分配基底 : {len(train_files)} 个音频 (占 80%)")
+    print(f"  ├──验证集(Val)   分配基底 : {len(val_files)} 个音频 (占 10%)")
+    print(f"  └──测试集(Test)  分配基底 : {len(test_files)} 个音频 (占 10%)")
     print(f"  注：三种集合所包含的原始说话人音色和音频段落完全独立，不存在任何交叠。")
     print("==================================================================\n")
 
-    # 3. 安全清理旧数据目录，防止新旧文件杂糅
+    #安全清理旧数据目录，防止新旧文件杂糅
     paths_to_clean = [
         os.path.join(data_root, "train"),
         os.path.join(data_root, "val"),
@@ -110,23 +110,23 @@ if __name__ == "__main__":
     ]
     for path in paths_to_clean:
         if os.path.exists(path):
-            print(f"🧹 正在清空历史旧目录: {path} ...")
+            print(f"正在清空历史旧目录: {path} ...")
             shutil.rmtree(path)
 
-    # 4. 一键开启全量流水线生成
-    print("\n📦 [1/3] 开始生成多梯度 训练集(Train)...")
+    #流水线生成
+    print("\n[1/3] 开始生成多梯度 训练集(Train)...")
     generate_gradient_dataset(train_files, os.path.join(data_root, "train"), samples_per_scenario=1000)
 
-    print("\n📦 [2/3] 开始生成多梯度 验证集(Val)...")
+    print("\n[2/3] 开始生成多梯度 验证集(Val)...")
     generate_gradient_dataset(val_files, os.path.join(data_root, "val"), samples_per_scenario=100)
 
-    print("\n📦 [3/3] 开始生成多梯度 测试集(Test)...")
+    print("\n[3/3] 开始生成多梯度 测试集(Test)...")
     generate_gradient_dataset(test_files, os.path.join(data_root, "test"), samples_per_scenario=100)
 
     print("\n==================================================================")
-    print("【🎉 大获全胜】全量数据集全自动流水线闭环生成完毕！")
-    print("  👉 训练集 (data/train): 4梯度 × 1000 = 4000 样本")
-    print("  👉 验证集 (data/val)  : 4梯度 × 100  = 400  样本")
-    print("  👉 测试集 (data/test) : 4梯度 × 100  = 400  样本")
-    print("  ✨ 零数据泄露、高学术严谨性的多说话者语音分离矩阵已正式筑基成功！")
+    print("全量数据集全自动流水线闭环生成完毕！")
+    print("  训练集 (data/train): 4梯度 × 1000 = 4000 样本")
+    print("  验证集 (data/val)  : 4梯度 × 100  = 400  样本")
+    print("  测试集 (data/test) : 4梯度 × 100  = 400  样本")
+    print("  零数据泄露、高学术严谨性的多说话者语音分离矩阵已正式筑基成功！")
     print("==================================================================")
