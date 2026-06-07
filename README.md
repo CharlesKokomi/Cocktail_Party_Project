@@ -46,28 +46,38 @@
 ```
 Cocktail_Party_Project/
 ├── src/
-│   ├── model.py              # 模型定义：SeparationNet（双向GRU掩码预测网络）
-│   ├── room_sim.py           # 房间声学模拟：pyroomacoustics 多声源混音
-│   ├── convert_audio.py      # 音频格式转换：FLAC → WAV (16kHz)
-│   ├── run_convert.py        # 格式转换入口脚本
-│   └── features.py           # 双耳特征提取工具（ILD 计算等）
-├── data/
-│   ├── LibriSpeech/          # [需自行下载] 原始 LibriSpeech FLAC 语料
-│   ├── processed_wav/        # FLAC 转换后的 16kHz WAV 文件
-│   ├── train/                # 训练集（4梯度 × 1000样本 = 4000）
-│   ├── val/                  # 验证集（4梯度 × 100样本 = 400）
-│   └── test/                 # 测试集（4梯度 × 100样本 = 400）
+│   ├── __init__.py             # 包初始化文件
+│   ├── model.py                # 模型定义：SeparationNet（双向GRU掩码预测网络）
+│   ├── room_sim.py             # 房间声学模拟：pyroomacoustics 多声源混音
+│   ├── convert_audio.py        # 音频格式转换：FLAC → WAV (16kHz)
+│   ├── run_convert.py          # 格式转换入口脚本
+│   └── features.py             # 双耳特征提取工具（ILD 计算等）
+├── data/                       # [本地目录，未上传GitHub]
+│   ├── LibriSpeech/            # [需自行下载] 原始 LibriSpeech FLAC 语料
+│   ├── processed_wav/          # FLAC 转换后的 16kHz WAV 文件
+│   ├── train/                  # 训练集（4梯度 × 1000样本 = 4000）
+│   ├── val/                    # 验证集（4梯度 × 100样本 = 400）
+│   └── test/                   # 测试集（4梯度 × 100样本 = 400）
 ├── weights/
-│   └── separation_net.pth    # 训练好的模型权重
-├── figures/                  # 评估结果可视化图表
-├── main.py                   # 训练主程序
-├── prepare_data.py           # 数据集生成流水线
-├── inference.py              # 批量推理（生成分离音频）
-├── evaluate.py               # 量化评估（SDR/STOI/PESQ）
-├── draw_figures.py           # 可视化脚本
-├── requirements.txt          # Python 依赖
-├── LICENSE                   # MIT 开源许可证
-└── README.md                 # 本文件
+│   └── separation_net.pth      # 训练好的模型权重
+├── figures/                    # 评估结果可视化图表
+│   ├── fig1_overall_performance.png
+│   ├── fig2_stoi_noise.png
+│   ├── fig3_pesq_noise.png
+│   └── fig4_delta_sdr_boxplot.png
+├── evaluation_report_spk_2.csv # 2说话人场景评估报告
+├── evaluation_report_spk_3.csv # 3说话人场景评估报告
+├── evaluation_report_spk_4.csv # 4说话人场景评估报告
+├── evaluation_report_spk_5.csv # 5说话人场景评估报告
+├── main.py                     # 训练主程序
+├── prepare_data.py             # 数据集生成流水线
+├── inference.py                # 批量推理（生成分离音频）
+├── evaluate.py                 # 量化评估（SDR/STOI/PESQ）
+├── draw_figures.py             # 可视化脚本
+├── requirements.txt            # Python 依赖
+├── .gitignore                  # Git 忽略规则
+├── LICENSE                     # MIT 开源许可证
+└── README.md                   # 本文件
 ```
 
 ---
